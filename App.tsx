@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PortfolioItem } from './types.ts';
 import { INITIAL_PORTFOLIO } from './constants.ts';
 
@@ -17,7 +17,11 @@ const App: React.FC = () => {
   useEffect(() => {
     const saved = localStorage.getItem('elly_portfolio_data');
     if (saved) {
-      setItems(JSON.parse(saved));
+      try {
+        setItems(JSON.parse(saved));
+      } catch (e) {
+        setItems(INITIAL_PORTFOLIO);
+      }
     } else {
       setItems(INITIAL_PORTFOLIO);
       localStorage.setItem('elly_portfolio_data', JSON.stringify(INITIAL_PORTFOLIO));
@@ -115,47 +119,6 @@ const App: React.FC = () => {
       setPasswordInput('');
     }
   };
-
-  // Components defined outside of the main return for clarity and performance
-  const Navigation = () => (
-    <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-xl z-50 border-b border-zinc-100">
-      <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-        <a 
-          href="#home" 
-          onClick={(e) => scrollToSection(e, 'home')}
-          className="text-2xl font-black tracking-tighter text-brand-600 transition-transform hover:scale-105"
-        >
-          Elly
-        </a>
-        <div className="hidden md:flex gap-10 text-sm font-semibold tracking-wide uppercase">
-          {[
-            { id: 'portfolio', label: 'Portfolio' },
-            { id: 'why-me', label: 'Why Me' },
-            { id: 'process', label: 'Process' },
-            { id: 'contact', label: 'Contact' }
-          ].map((link) => (
-            <a
-              key={link.id}
-              href={`#${link.id}`}
-              onClick={(e) => scrollToSection(e, link.id)}
-              className={`${
-                activeSection === link.id ? 'text-brand-600 scale-110' : 'text-zinc-500'
-              } hover:text-brand-600 transition-all duration-300 relative group`}
-            >
-              {link.label}
-              <span className={`absolute -bottom-1 left-0 w-full h-0.5 bg-brand-600 transition-transform duration-300 origin-left ${activeSection === link.id ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-50'}`}></span>
-            </a>
-          ))}
-        </div>
-        <button 
-          onClick={() => setShowLoginModal(true)} 
-          className="text-xs font-black text-zinc-300 hover:text-brand-500 transition-colors uppercase tracking-[0.2em] border border-zinc-100 px-4 py-2 rounded-full hover:border-brand-200"
-        >
-          Admin
-        </button>
-      </div>
-    </nav>
-  );
 
   return (
     <div className="relative min-h-screen selection:bg-brand-100 selection:text-brand-900 bg-white">
@@ -281,7 +244,43 @@ const App: React.FC = () => {
         </div>
       ) : (
         <>
-          <Navigation />
+          <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-xl z-50 border-b border-zinc-100">
+            <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+              <a 
+                href="#home" 
+                onClick={(e) => scrollToSection(e, 'home')}
+                className="text-2xl font-black tracking-tighter text-brand-600 transition-transform hover:scale-105"
+              >
+                Elly
+              </a>
+              <div className="hidden md:flex gap-10 text-sm font-semibold tracking-wide uppercase">
+                {[
+                  { id: 'portfolio', label: 'Portfolio' },
+                  { id: 'why-me', label: 'Why Me' },
+                  { id: 'process', label: 'Process' },
+                  { id: 'contact', label: 'Contact' }
+                ].map((link) => (
+                  <a
+                    key={link.id}
+                    href={`#${link.id}`}
+                    onClick={(e) => scrollToSection(e, link.id)}
+                    className={`${
+                      activeSection === link.id ? 'text-brand-600 scale-110' : 'text-zinc-500'
+                    } hover:text-brand-600 transition-all duration-300 relative group`}
+                  >
+                    {link.label}
+                    <span className={`absolute -bottom-1 left-0 w-full h-0.5 bg-brand-600 transition-transform duration-300 origin-left ${activeSection === link.id ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-50'}`}></span>
+                  </a>
+                ))}
+              </div>
+              <button 
+                onClick={() => setShowLoginModal(true)} 
+                className="text-xs font-black text-zinc-300 hover:text-brand-500 transition-colors uppercase tracking-[0.2em] border border-zinc-100 px-4 py-2 rounded-full hover:border-brand-200"
+              >
+                Admin
+              </button>
+            </div>
+          </nav>
           <main>
             {/* HOME SECTION */}
             <section id="home" className="min-h-screen flex flex-col justify-center items-center text-center px-6 pt-20 overflow-hidden relative">
