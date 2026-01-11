@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
-import { PortfolioItem } from './types';
-import { INITIAL_PORTFOLIO } from './constants';
+import React, { useState, useEffect, useCallback } from 'react';
+import { PortfolioItem } from './types.ts';
+import { INITIAL_PORTFOLIO } from './constants.ts';
 
 const App: React.FC = () => {
   const [items, setItems] = useState<PortfolioItem[]>([]);
@@ -20,6 +20,7 @@ const App: React.FC = () => {
       setItems(JSON.parse(saved));
     } else {
       setItems(INITIAL_PORTFOLIO);
+      localStorage.setItem('elly_portfolio_data', JSON.stringify(INITIAL_PORTFOLIO));
     }
 
     const observerOptions = {
@@ -70,7 +71,8 @@ const App: React.FC = () => {
 
   const handleDelete = (id: string) => {
     if (window.confirm('정말 이 프로젝트를 삭제하시겠습니까?')) {
-      saveToStorage(items.filter(item => item.id !== id));
+      const newItems = items.filter(item => item.id !== id);
+      saveToStorage(newItems);
     }
   };
 
@@ -114,7 +116,8 @@ const App: React.FC = () => {
     }
   };
 
-  const Nav = () => (
+  // Components defined outside of the main return for clarity and performance
+  const Navigation = () => (
     <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-xl z-50 border-b border-zinc-100">
       <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
         <a 
@@ -155,11 +158,11 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="relative min-h-screen selection:bg-brand-100 selection:text-brand-900">
+    <div className="relative min-h-screen selection:bg-brand-100 selection:text-brand-900 bg-white">
       {/* Login Modal */}
       {showLoginModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-900/60 backdrop-blur-sm px-6">
-          <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full animate-in zoom-in duration-300">
+          <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full animate-zoom-in">
             <h3 className="text-2xl font-black text-zinc-900 mb-2 tracking-tight">Admin Login</h3>
             <p className="text-zinc-400 text-sm mb-8 font-medium">관리자 비밀번호를 입력하세요.</p>
             <form onSubmit={handleLoginSubmit} className="space-y-4">
@@ -185,7 +188,7 @@ const App: React.FC = () => {
       )}
 
       {isAdmin ? (
-        <div className="min-h-screen pt-32 pb-20 bg-zinc-50 animate-in fade-in duration-700">
+        <div className="min-h-screen pt-32 pb-20 bg-zinc-50 animate-fade-in">
           <div className="max-w-4xl mx-auto px-6">
             <div className="flex justify-between items-center mb-12">
               <div>
@@ -209,31 +212,31 @@ const App: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-widest text-brand-500 ml-1">Project Title</label>
-                  <input type="text" placeholder="제목을 입력하세요" value={formData.title || ''} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900" />
+                  <input type="text" placeholder="제목" value={formData.title || ''} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900" />
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-widest text-brand-500 ml-1">Category</label>
-                  <input type="text" placeholder="분류 (Print, Web, Branding 등)" value={formData.category || ''} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900" />
+                  <input type="text" placeholder="분류" value={formData.category || ''} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900" />
                 </div>
                 <div className="space-y-3 col-span-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-brand-500 ml-1">Image Link</label>
-                  <input type="text" placeholder="이미지 URL 주소를 입력하세요" value={formData.image || ''} onChange={e => setFormData({...formData, image: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900" />
+                  <input type="text" placeholder="URL" value={formData.image || ''} onChange={e => setFormData({...formData, image: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900" />
                 </div>
                 <div className="space-y-3 col-span-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-brand-500 ml-1">Short Description</label>
-                  <input type="text" placeholder="메인 카드에 표시될 한 줄 설명을 입력하세요" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900" />
+                  <input type="text" placeholder="카드 설명" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900" />
                 </div>
                 <div className="space-y-3 col-span-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-brand-500 ml-1">Project Overview</label>
-                  <textarea placeholder="프로젝트의 전반적인 개요를 적어주세요" value={formData.overview || ''} onChange={e => setFormData({...formData, overview: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900 min-h-[120px] resize-none" />
+                  <textarea placeholder="개요" value={formData.overview || ''} onChange={e => setFormData({...formData, overview: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900 min-h-[100px] resize-none" />
                 </div>
                 <div className="space-y-3 col-span-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-brand-500 ml-1">Design Strategy</label>
-                  <textarea placeholder="어떤 디자인 전략을 사용했나요?" value={formData.approach || ''} onChange={e => setFormData({...formData, approach: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900 min-h-[120px] resize-none" />
+                  <textarea placeholder="전략" value={formData.approach || ''} onChange={e => setFormData({...formData, approach: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900 min-h-[100px] resize-none" />
                 </div>
                 <div className="space-y-3 col-span-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-brand-500 ml-1">Final Result</label>
-                  <textarea placeholder="결과와 성과를 기술해주세요" value={formData.result || ''} onChange={e => setFormData({...formData, result: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900 min-h-[120px] resize-none" />
+                  <textarea placeholder="성과" value={formData.result || ''} onChange={e => setFormData({...formData, result: e.target.value})} className="w-full bg-zinc-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-brand-500 font-medium text-zinc-900 min-h-[100px] resize-none" />
                 </div>
               </div>
               <div className="mt-12 flex gap-4 relative z-10">
@@ -278,14 +281,14 @@ const App: React.FC = () => {
         </div>
       ) : (
         <>
-          <Nav />
+          <Navigation />
           <main>
             {/* HOME SECTION */}
             <section id="home" className="min-h-screen flex flex-col justify-center items-center text-center px-6 pt-20 overflow-hidden relative">
               <div className="absolute top-1/4 -left-20 w-96 h-96 bg-brand-50 rounded-full blur-[120px] opacity-40"></div>
               <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-brand-50 rounded-full blur-[120px] opacity-40"></div>
               
-              <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-10 duration-1000 relative z-10">
+              <div className="max-w-4xl animate-slide-in-from-bottom-10 relative z-10">
                 <p className="text-sm font-black tracking-[0.4em] uppercase mb-8 text-brand-500">Design Portfolio</p>
                 <h1 className="text-5xl md:text-8xl font-black leading-[1.05] mb-10 tracking-tighter text-zinc-900">
                   디자인으로 ‘보기 좋은 것’이 아니라<br />
